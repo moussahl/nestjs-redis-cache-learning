@@ -1,0 +1,78 @@
+# =========================
+# Node / NestJS
+# =========================
+backend/node_modules/
+backend/dist/
+backend/build/
+backend/coverage/
+backend/.nyc_output/
+
+# Prisma generated client
+backend/src/generated/prisma/
+
+# =========================
+# Environment variables
+# =========================
+backend/.env
+backend/.env.*
+!.env.example
+
+# =========================
+# Logs
+# =========================
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# =========================
+# Runtime
+# =========================
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# =========================
+# Temporary files
+# =========================
+.temp/
+.tmp/
+
+# =========================
+# OS
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# IDEs
+# =========================
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+.idea/
+.project
+.classpath
+.c9/
+.settings/
+*.launch
+*.sublime-workspace
+
+# =========================
+# Diagnostic reports
+# =========================
+report.*.*.*.*.json
+
+# =========================
+# AI editor folders (optional)
+# =========================
+backend/.agents/
+backend/.claude/
+backend/.windsurf/
