@@ -5,12 +5,22 @@ import { ProductModule } from './product/product.module.js';
 import { PrismaService } from '../prisma.service.js';
 import { ConfigModule } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
+import { createKeyv } from '@keyv/redis';
+
 
 @Module({
-  imports: [ConfigModule.forRoot(),ProductModule,
+  imports: [
+    ConfigModule.forRoot(),
+    ProductModule,
     CacheModule.register({
-      ttl: 60, // seconds
-      isGlobal: true,})
+      isGlobal: true,
+
+      stores: [
+        createKeyv('redis://redis:6379'),
+      ],
+
+      ttl: 5000
+    }),
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
