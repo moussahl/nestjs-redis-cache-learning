@@ -1,11 +1,17 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
+
 import { PrismaService } from '../../prisma.service';
 import { Prisma, Product } from '../generated/prisma/client';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update.product.dto';
-import { NotFoundError } from 'rxjs';
 
 @Injectable()
 export class ProductService {
@@ -16,106 +22,134 @@ export class ProductService {
     private cacheManager: Cache,
   ) {}
 
-  //Get all products
+  // GET ALL PRODUCTS
   async getProducts() {
-    const cacheKey = 'products:all';
+    try {
+      const cacheKey = 'products:all';
 
-    // Check Redis
-    const cachedProducts = await this.cacheManager.get(cacheKey);
+      const cachedProducts = await this.cacheManager.get(cacheKey);
 
-    if (cachedProducts) {
-      console.log('FRPOM REDIS');
-      return cachedProducts;
+      if (cachedProducts) {
+        console.log('FROM REDIS');
+        return cachedProducts;
+      }
+
+      const products = await this.prisma.product.findMany();
+
+      await this.cacheManager.set(cacheKey, products);
+
+      console.log('FROM DATABASE');
+
+      return products;
+    } catch (error) {
+      throw new InternalServerErrorException('Could not retrieve products');
     }
-
-    //Get from Database
-    const products = await this.prisma.product.findMany();
-
-    if(!products){
-      throw new NotFoundException(`n`)
-    }
-
-    // Save in Redis
-    await this.cacheManager.set(cacheKey, products);
-
-    console.log('FROM DATABASE');
-
-    return products;
   }
 
+  // GET ONE PRODUCT
   async getProduct(id: number) {
-    const cacheKey = `product:${id}`;
+    try {
+      const cacheKey = `product:${id}`;
 
-    //verify Redis
-    const cahcedProduct = await this.cacheManager.get(cacheKey);
+      const cachedProduct = await this.cacheManager.get(cacheKey);
 
-    if (cahcedProduct) {
-      return cahcedProduct;
-    }
+      if (cachedProduct) {
+        console.log('FROM REDIS');
+        return cachedProduct;
+      }
 
-    // Get from DATABASE
-    const product = await this.prisma.product.findUnique({
-      where: {
-        id: Number(id),
-      },
-    });
+      const product = await this.prisma.product.findUnique({
+        where: {
+          id,
+        },
+      });
 
-    //Save in Redis
-    if (product) {
+      if (!product) {
+        throw new NotFoundException(`Product with id ${id} not found`);
+      }
+
       await this.cacheManager.set(cacheKey, product);
+
+      return product;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException('Could not retrieve product');
     }
-
-    return product;
   }
 
-  // Create Prodcut
+  // CREATE PRODUCT
   async createProduct(dto: CreateProductDto): Promise<Product> {
-    // Save DATABSE
-    const product = this.prisma.product.create({
-      data: {
-        ...dto,
-      },
-    });
+    try {
+      const product = await this.prisma.product.create({
+        data: {
+          ...dto,
+        },
+      });
 
-    // Invalidate cache
+      await this.cacheManager.del('products:all');
 
-    const cacheKey = `products:all`;
-    await this.cacheManager.del(cacheKey);
-
-    return product;
+      return product;
+    } catch (error) {
+      throw new InternalServerErrorException('Could not create product');
+    }
   }
 
-  // Update
+  // UPDATE PRODUCT
   async updateProduct(id: number, dto: UpdateProductDto): Promise<Product> {
-    const product = await this.prisma.product.update({
-      where: {
-        id,
-      },
-      data: {
-        ...dto,
-      },
-    });
+    try {
+      const product = await this.prisma.product.update({
+        where: {
+          id,
+        },
 
-    //invalidate cache
-    await this.cacheManager.del('products:all');
-    await this.cacheManager.del(`product:${id}`);
+        data: {
+          ...dto,
+        },
+      });
 
-    return product;
+      await this.cacheManager.del('products:all');
+
+      await this.cacheManager.del(`product:${id}`);
+
+      return product;
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException(`Product with id ${id} not found`);
+      }
+
+      throw new InternalServerErrorException('Could not update product');
+    }
   }
 
-  //Delete Product
-
+  // DELETE PRODUCT
   async deleteProduct(id: number): Promise<Product> {
-    const product = await this.prisma.product.delete({
-      where: {
-        id,
-      },
-    });
+    try {
+      const product = await this.prisma.product.delete({
+        where: {
+          id,
+        },
+      });
 
-    // invalidate cache
-    await this.cacheManager.del('products:all');
-    await this.cacheManager.del(`product:${id}`);
+      await this.cacheManager.del('products:all');
 
-    return product;
+      await this.cacheManager.del(`product:${id}`);
+
+      return product;
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException(`Product with id ${id} not found`);
+      }
+
+      throw new InternalServerErrorException('Could not delete product');
+    }
   }
 }
