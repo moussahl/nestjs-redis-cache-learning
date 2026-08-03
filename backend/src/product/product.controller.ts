@@ -6,8 +6,8 @@ import {
   Param,
   Patch,
   Post,
-  Put,
 } from '@nestjs/common';
+
 import { ProductService } from './product.service.js';
 import { CreateProductDto } from './dto/create-product.dto.js';
 import { UpdateProductDto } from './dto/update.product.dto.js';
@@ -17,27 +17,57 @@ export class ProductController {
   constructor(private productService: ProductService) {}
 
   @Get()
-  getProducts() {
-    return this.productService.getProducts();
+  async getProducts() {
+    const products = await this.productService.getProducts();
+
+    return {
+      success: true,
+      message: 'Products retrieved successfully',
+      data: products,
+    };
   }
 
   @Get(':id')
-  getProduct(@Param('id') id: string) {
-    return this.productService.getProduct(Number(id));
+  async getProduct(@Param('id') id: string) {
+    const product = await this.productService.getProduct(Number(id));
+
+    return {
+      success: true,
+      message: 'Product retrieved successfully',
+      data: product,
+    };
   }
 
   @Post()
-  createProduct(@Body() data: CreateProductDto) {
-    return this.productService.createProduct(data);
+  async createProduct(@Body() data: CreateProductDto) {
+    const product = await this.productService.createProduct(data);
+
+    return {
+      success: true,
+      message: 'Product created successfully',
+      data: product,
+    };
   }
 
   @Patch(':id')
-  updateProduct(@Param('id') id: string, @Body() data: UpdateProductDto) {
-    return this.productService.updateProduct(Number(id), data);
+  async updateProduct(@Param('id') id: string, @Body() data: UpdateProductDto) {
+    const product = await this.productService.updateProduct(Number(id), data);
+
+    return {
+      success: true,
+      message: 'Product updated successfully',
+      data: product,
+    };
   }
 
   @Delete(':id')
-  deleteProduct(@Param('id') id: string) {
-    return this.productService.deleteProduct(Number(id));
+  async deleteProduct(@Param('id') id: string) {
+    const product = await this.productService.deleteProduct(Number(id));
+
+    return {
+      success: true,
+      message: 'Product deleted successfully',
+      data: product,
+    };
   }
 }
