@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
 } from '@nestjs/common';
@@ -28,8 +29,8 @@ export class ProductController {
   }
 
   @Get(':id')
-  async getProduct(@Param('id') id: string) {
-    const product = await this.productService.getProduct(Number(id));
+  async getProduct(@Param('id', ParseIntPipe) id: number) {
+    const product = await this.productService.getProduct(id);
 
     return {
       success: true,
@@ -50,8 +51,11 @@ export class ProductController {
   }
 
   @Patch(':id')
-  async updateProduct(@Param('id') id: string, @Body() data: UpdateProductDto) {
-    const product = await this.productService.updateProduct(Number(id), data);
+  async updateProduct(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() data: UpdateProductDto,
+  ) {
+    const product = await this.productService.updateProduct(id, data);
 
     return {
       success: true,
@@ -61,8 +65,8 @@ export class ProductController {
   }
 
   @Delete(':id')
-  async deleteProduct(@Param('id') id: string) {
-    const product = await this.productService.deleteProduct(Number(id));
+  async deleteProduct(@Param('id', ParseIntPipe) id: number) {
+    const product = await this.productService.deleteProduct(id);
 
     return {
       success: true,
